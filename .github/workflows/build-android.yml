@@ -1,0 +1,74 @@
+name: Build Kodi Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git build-essential cmake curl \
+            default-jdk-headless libgl1-mesa-dev libglu1-mesa-dev \
+            python3 zip unzip autoconf automake libtool \
+            pkg-config nasm gperf
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: sdkmanager "ndk;26.1.10909125"
+
+      - name: Cache tarballs
+        uses: actions/cache@v4
+        with:
+          path: ~/kodi-tarballs
+          key: kodi-tarballs-${{ hashFiles('tools/depends/**') }}
+
+      - name: Build depends
+        run: |
+          cd tools/depends
+          ./bootstrap
+          ./configure \
+            --with-tarballs=$HOME/kodi-tarballs \
+            --host=aarch64-linux-android \
+            --with-sdk-path=$ANDROID_SDK_ROOT \
+            --with-ndk-path=$ANDROID_SDK_ROOT/ndk/26.1.10909125 \
+            --with-ndk-api=24
+          make -j$(nproc)
+
+      - name: Configure Kodi
+        run: |
+          mkdir -p ~/kodi-build && cd ~/kodi-build
+          cmake $GITHUB_WORKSPACE \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_SDK_ROOT/ndk/26.1.10909125/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-24 \
+            -DCORE_SYSTEM_NAME=android \
+            -DAPP_RENDER_SYSTEM=gles \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DDEPENDS_PATH=$GITHUB_WORKSPACE/tools/depends/target
+
+      - name: Build Kodi
+        run: |
+          cd ~/kodi-build
+          make -j$(nproc)
+
+      - name: Package APK
+        run: |
+          cd ~/kodi-build
+          make apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kodi-android-arm64
+          path: ~/kodi-build/kodi-*.apk
+          retention-days: 7
