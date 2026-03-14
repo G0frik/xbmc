@@ -11,11 +11,13 @@
 #include "input/touch/generic/GenericTouchPinchDetector.h"
 #include "input/touch/generic/GenericTouchRotateDetector.h"
 #include "input/touch/generic/GenericTouchSwipeDetector.h"
+#include "input/touch/generic/GenericTouchActionHandler.h"
 #include "utils/log.h"
 
 #include <algorithm>
 #include <cmath>
 #include <mutex>
+#include <chrono>
 
 using namespace std::chrono_literals;
 
@@ -148,8 +150,27 @@ bool CGenericTouchInputHandler::HandleTouchInput(TouchInput event,
         result = OnSingleTouchEnd(x, y);
 
         if (m_gestureState == TouchGestureSingleTouch)
-          OnTap(x, y, 1);
-      }
+        {
+          auto now = std::chrono::steady_clock::now();
+          auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+              now - m_lastTapTime).count();
+
+          if (elapsed < 300 &&
+              std::abs(x - m_lastTapX) < 80.0f &&
+              std::abs(y - m_lastTapY) < 80.0f)
+          {
+            // Double-tap detected
+            CGenericTouchActionHandler::GetInstance().OnDoubleTap(x, y, 1);
+            m_lastTapTime = {};  // reset so triple-tap doesn't trigger again
+          }
+          else
+          {
+            OnTap(x, y, 1);
+            m_lastTapTime = now;
+            m_lastTapX = x;
+            m_lastTapY = y;
+          }
+        }
       // A pan gesture started with a single pointer (ignoring any other pointers)
       else if (m_gestureState == TouchGesturePan)
       {
