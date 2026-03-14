@@ -117,6 +117,17 @@ void CGenericTouchActionHandler::OnLongPress(float x, float y, int32_t pointers 
   sendEvent(ACTION_TOUCH_LONGPRESS, x, y, 0.0f, 0.0f, 0.0f, 0.0f, pointers);
 }
 
+void CGenericTouchActionHandler::OnDoubleTap(float x, float y, int32_t pointers /* = 1 */)
+{
+  if (pointers <= 0 || pointers > 10)
+    return;
+
+  if (x < 540.0f)
+    sendEvent(ACTION_SMALL_STEP_BACK, x, y, 0.0f, 0.0f, 0.0f, 0.0f, pointers);
+  else
+    sendEvent(ACTION_STEP_FORWARD, x, y, 0.0f, 0.0f, 0.0f, 0.0f, pointers);
+}
+
 void CGenericTouchActionHandler::OnSwipe(TouchMoveDirection direction,
                                          float xDown,
                                          float yDown,
