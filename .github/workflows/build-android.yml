@@ -43,6 +43,7 @@ jobs:
           cd tools/depends
           ./bootstrap
           ./configure \
+            --prefix=$HOME/kodi-depends \
             --with-tarballs=$HOME/kodi-tarballs \
             --host=aarch64-linux-android \
             --with-sdk-path=$ANDROID_SDK_ROOT \
@@ -60,7 +61,7 @@ jobs:
             -DCORE_SYSTEM_NAME=android \
             -DAPP_RENDER_SYSTEM=gles \
             -DCMAKE_BUILD_TYPE=Release \
-            -DDEPENDS_PATH=$GITHUB_WORKSPACE/tools/depends/target
+            -DDEPENDS_PATH=$HOME/kodi-depends/aarch64-linux-android
 
       - name: Build Kodi
         run: |
