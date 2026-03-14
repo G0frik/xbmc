@@ -16,6 +16,7 @@
 #include <array>
 #include <memory>
 #include <set>
+#include <chrono>
 
 class IGenericTouchGestureDetector;
 
@@ -95,4 +96,8 @@ private:
 
   TouchGestureState m_gestureState = TouchGestureUnknown;
   TouchGestureState m_gestureStateOld = TouchGestureUnknown;
+  // Double-tap detection
+  std::chrono::steady_clock::time_point m_lastTapTime;
+  float m_lastTapX{0.0f};
+  float m_lastTapY{0.0f};
 };
