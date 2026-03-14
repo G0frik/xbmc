@@ -54,6 +54,7 @@ public:
   // convenience events
   void OnTap(float x, float y, int32_t pointers = 1) override;
   void OnLongPress(float x, float y, int32_t pointers = 1) override;
+  void OnDoubleTap(float x, float y, int32_t pointers = 1);
   void OnSwipe(TouchMoveDirection direction,
                float xDown,
                float yDown,
